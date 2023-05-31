@@ -1,25 +1,21 @@
-# Federated Learning Network
+# Federated Learning Local System
 
-Provides a central node, and a client node implementation to build a Federated Learning network.
+Central node and a client node implementation to build a Federated Learning network in local.
 The central node orchestrates the training of one or several models that is performed by the client nodes.
 Each client node has its own dataset to train a local model, and sends the result of the training to the 
 central node, that calculates the average of all the weights of the node clients models. That average 
 will be used by the clients on the next rounds of trainings. The local data of each client node is never 
 shared with any other node.
 
-## Introduction
-
-There are two options for running the nodes in the network, using Docker to create containers for each kind of node, or
-using a standard local installation from the command line. Of course, both can be mixed (some nodes running as containers and other 
-by command line).
+For the execution, we will be using a standard local installation from the command line.
 
 ### Datasets
 For now, there are two models for training: MNIST and Chest X-Ray. For using the MNIST one you don't need to install anything else because
 the client node downloads the dataset when it runs the training, but for the Chest X-Ray model you'll need a dataset to get it working.
 
-Download the dataset from https://data.mendeley.com/public-files/datasets/rscbjbr9sj/files/f12eaf6d-6023-432f-acc9-80c9d7393433/file_downloaded, 
-and uncompress it wherever you want on the client node machine, in a folder called `chest_xray`. 
-The final structure must be (other content in this folder will be ignored):
+The dataset was downloaded from https://data.mendeley.com/public-files/datasets/rscbjbr9sj/files/f12eaf6d-6023-432f-acc9-80c9d7393433/file_downloaded, 
+As you can see, it is already attached in th directory datasets of this repo.
+The final structure should be (other content in this folder will be ignored):
 
     chest_xray
          |----- train
@@ -31,64 +27,11 @@ The final structure must be (other content in this folder will be ignored):
                   |----- PNEUMONIA
 
 By default, the client node looks for it at GLOBAL_DATASETS/chest_xray. The variable GLOBAL_DATASETS is defined 
-in the configuration file `client/config.py`.
+in the configuration file `client/config.py`. Everything is already well defined. In particular, for Chest X-Ray training, it'll expect a directory `chest_xray` in your dataset's directory with at least two folders `train` and `test` with x-ray images. 
 
-If you're going to run the client node using Docker, you must pass a volume as a container parameter to indicate where you 
-have the datasets:
-
-    -v /your_datasets_directory:/federated-learning-network/datasets
-
-In particular, for Chest X-Ray training, it'll expect a directory `chest_xray` in your dataset's directory with at least 
-two folders `train` and `test` with x-ray images. 
-
-### Docker installation
-
-Create the Docker image of the server:
     
-    cd server
-    docker build -t fl-server -f Dockerfile .
-    
-Run the server:
-
-    docker run --rm --name fl-server -p 5000:5000 fl-server:latest
-
-This command will delete the server container after stopping it. It runs the server on port 5000.
-
-For the client, the first step is creating the Docker image:
-
-    cd client
-    docker build -t fl-client -f Dockerfile .
-    
-#### Running the project   
-Now there can be two different scenarios: running nodes on the same IP address, or running each node on a different IP address.
-Bear always in mind than we can choose the ports we want if they are free. The ports used in these examples are just that, examples.
-
-##### Same machine
-If our IP address is for example 192.168.1.20, and we have the server running on port 5000, we can run several Docker clients in different ports:
-
-    docker run --rm --name fl-client-5001 -p 5001:5000 -e CLIENT_URL='http://192.168.1.20:5001' -e SERVER_URL='http://192.168.1.20:5000' -v /your_datasets_directory:/federated-learning-network/datasets fl-client:latest
-    docker run --rm --name fl-client-5002 -p 5002:5000 -e CLIENT_URL='http://192.168.1.20:5002' -e SERVER_URL='http://192.168.1.20:5000' -v /your_datasets_directory:/federated-learning-network/datasets fl-client:latest
-    docker run --rm --name fl-client-5003 -p 5003:5000 -e CLIENT_URL='http://192.168.1.20:5003' -e SERVER_URL='http://192.168.1.20:5000' -v /your_datasets_directory:/federated-learning-network/datasets fl-client:latest
-    docker run --rm --name fl-client-5004 -p 5004:5000 -e CLIENT_URL='http://192.168.1.20:5004' -e SERVER_URL='http://192.168.1.20:5000' -v /your_datasets_directory:/federated-learning-network/datasets fl-client:latest
-
-If the server is running on another IP address, simply change the variable SERVER_URL accordingly.
-
-**IMPORTANT**: To be able to use the Chest X-Ray model training follow the instructions of _Training the Chest X-Ray model_ section.
-
-##### Every node on a different IP address
-If the IP address of the server is, for instance, at 192.168.1.100, and every client will be running on different IP addresses, we can do: 
-
-    docker run --rm --name fl-client -p 5000:5000 -e CLIENT_URL='http://192.168.1.28:5000' -e SERVER_URL='http://192.168.1.100:5000' -v /your_datasets_directory:/federated-learning-network/datasets fl-client:latest
-    
-For other clients, simply use the right IP address of each one:
-
-    docker run --rm --name fl-client -p 5000:5000 -e CLIENT_URL='http://192.168.1.50:5000' -e SERVER_URL='http://192.168.1.100:5000' -v /your_datasets_directory:/federated-learning-network/datasets fl-client:latest
-    docker run --rm --name fl-client -p 5000:5000 -e CLIENT_URL='http://192.168.1.60:5000' -e SERVER_URL='http://192.168.1.100:5000' -v /your_datasets_directory:/federated-learning-network/datasets fl-client:latest
-    docker run --rm --name fl-client -p 5000:5000 -e CLIENT_URL='http://192.168.1.70:5000' -e SERVER_URL='http://192.168.1.100:5000' -v /your_datasets_directory:/federated-learning-network/datasets fl-client:latest
-    docker run --rm --name fl-client -p 5000:5000 -e CLIENT_URL='http://192.168.1.80:5000' -e SERVER_URL='http://192.168.1.100:5000' -v /your_datasets_directory:/federated-learning-network/datasets fl-client:latest    
-    
-### Command line
-If Docker is not an option, then you must install everything and running from the command line.
+### Command line local execution
+You must install everything and running from the command line.
 Python version must be 3.8, I haven't tested it with 3.9 or <3.8 versions.
 
 The best way is to have an isolated environment using conda or similar environment managers.
